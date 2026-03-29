@@ -66,15 +66,14 @@
                 position: absolute;
                 bottom: calc(var(--bubble-size) + 15px);
                 right: 0;
-                width: ${widgetWidth};
-                height: ${widgetHeight};
+                width: ${widgetWidth}px;
+                height: ${widgetHeight}px;
                 background: white;
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.25);
                 display: none;
                 flex-direction: column;
                 overflow: hidden;
-                border: 1px solid #e0e0e0;
             }
 
             .chat-header {
