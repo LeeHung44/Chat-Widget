@@ -20,8 +20,10 @@
 
     const widgetWrapper = document.createElement('div');
     widgetWrapper.id = 'chat-widget-wrapper';
-    widgetWrapper.style.width = widgetWidth;
-    widgetWrapper.style.height = widgetHeight;
+    widgetContaier.style.position = "fixed";
+    widgetContaier.style.zIndex = 99999;
+    widgetContaier.style.bottom = "20px";
+    widgetContaier.style.right = "20px";
 
     const shadown = widgetWrapper.attachShadow({ mode: 'open' });
 
@@ -39,7 +41,6 @@
                 font-family: system-ui, -apple-system, sans-serif;
             }
 
-            /* Nút float button */
             .float-button {
                 width: var(--bubble-size);
                 height: var(--bubble-size);
@@ -61,7 +62,6 @@
                 box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5);
             }
 
-            /* Khung chat */
             .chat-window {
                 position: absolute;
                 bottom: calc(var(--bubble-size) + 15px);
@@ -163,11 +163,11 @@
             }
         </style>
 
-        <button class="float-button">
+        <button class="float-button" id="float-button">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 3H14C18.4183 3 22 6.58172 22 11C22 15.4183 18.4183 19 14 19V22.5C9 20.5 2 17.5 2 11C2 6.58172 5.58172 3 10 3ZM12 17H14C17.3137 17 20 14.3137 20 11C20 7.68629 17.3137 5 14 5H10C6.68629 5 4 7.68629 4 11C4 14.61 6.46208 16.9656 12 19.4798V17Z"></path></svg>
         </button>
 
-        <div class="chat-window">
+        <div class="chat-window" id="chat-window">
             <div class="chat-header">
                 <h3>Chat So9</h3>
                 <button class="close-btn">✕</button>
@@ -181,6 +181,18 @@
             </div>
         </div>
     `;
+
+    const floatButton = shadown.getElementById('float-button');
+    const chatWindow = shadown.getElementById('chat-window');
+
+    let isOpenChat = false;
+
+    function toggleChat() {
+        isOpenChat = !isOpenChat;
+        chatWindow.style.display = isOpenChat ? 'flex' : 'none';
+    }
+
+    floatButton.addEventListener('click', toggleChat);
 
     shadown.appendChild(template.content.cloneNode(true));
 
