@@ -65,7 +65,7 @@
             .chat-window {
                 position: absolute;
                 bottom: calc(var(--bubble-size) + 15px);
-                ${position === 'left' ? 'left: 0;' : 'right: 0;'}
+                right: 0;
                 width: ${widgetWidth};
                 height: ${widgetHeight};
                 background: white;
