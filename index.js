@@ -186,4 +186,7 @@
 
     document.body.appendChild(widgetWrapper);
 
+    console.log("Check load Widget done");
+    
+
 })();
