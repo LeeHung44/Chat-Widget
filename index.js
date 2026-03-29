@@ -184,6 +184,6 @@
 
     shadown.appendChild(template.content.cloneNode(true));
 
-    document.body.appendChild(shadown);
+    document.body.appendChild(widgetWrapper);
 
 })();
