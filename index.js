@@ -1,3 +1,3 @@
 (function() {
-  console.log('Hello World');
+  console.log('Chat widget loaded');
 })();
