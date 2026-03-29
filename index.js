@@ -181,20 +181,20 @@
             </div>
         </div>
     `;
+    shadown.appendChild(template.content.cloneNode(true));
 
     const floatButton = shadown.getElementById('float-button');
     const chatWindow = shadown.getElementById('chat-window');
 
     let isOpenChat = false;
-
+    
     function toggleChat() {
         isOpenChat = !isOpenChat;
         chatWindow.style.display = isOpenChat ? 'flex' : 'none';
     }
-
+    
     floatButton.addEventListener('click', toggleChat);
 
-    shadown.appendChild(template.content.cloneNode(true));
 
     document.body.appendChild(widgetWrapper);
 
