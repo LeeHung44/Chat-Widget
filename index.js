@@ -21,7 +21,7 @@
     const widgetWrapper = document.createElement('div');
     widgetWrapper.id = 'chat-widget-wrapper';
     widgetContaier.style.position = "fixed";
-    widgetContaier.style.zIndex = 99999;
+    widgetContaier.style.zIndex = '99999';
     widgetContaier.style.bottom = "20px";
     widgetContaier.style.right = "20px";
 
@@ -177,7 +177,9 @@
             </div>
             <div class="chat-footer">
                 <input type="text" class="chat-input" placeholder="Nhập tin nhắn...">
-                <button class="send-btn">Send</button>
+                <button class="send-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3.5 1.34558C3.58425 1.34558 3.66714 1.36687 3.74096 1.40747L22.2034 11.5618C22.4454 11.6949 22.5337 11.9989 22.4006 12.2409C22.3549 12.324 22.2865 12.3924 22.2034 12.4381L3.74096 22.5924C3.499 22.7255 3.19497 22.6372 3.06189 22.3953C3.02129 22.3214 3 22.2386 3 22.1543V1.84558C3 1.56944 3.22386 1.34558 3.5 1.34558ZM5 4.38249V10.9999H10V12.9999H5V19.6174L18.8499 11.9999L5 4.38249Z"></path></svg>
+                </button>
             </div>
         </div>
     `;
@@ -196,7 +198,7 @@
     floatButton.addEventListener('click', toggleChat);
 
 
-    document.body.appendChild(widgetWrapper);
+    widgetContaier.appendChild(widgetWrapper);
 
     console.log("Check load Widget done");
     
