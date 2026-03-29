@@ -12,7 +12,7 @@
         return;
     }
 
-    const floatButtonElement = `
+    widgetContaier.innerHTML = `
         <style>
             #chat-widget-float-button {
                 position: fixed;
@@ -43,8 +43,6 @@
     console.log("Chat widget welcome-message:", welcomeMessage);
     console.log("Chat widget widget-width:", widgetWidth);
     console.log("Chat widget widget-height:", widgetHeight);
-
-    widgetContaier.appendChild(floatButtonElement);
 
     const mainContentElement = `
     
