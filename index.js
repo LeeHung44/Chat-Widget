@@ -85,17 +85,39 @@
 
   function convertImageToBase64(file) {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      const img = new Image();
 
-      reader.onload = () => {
-        resolve(reader.result); 
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        const MAX_SIZE = 256;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width * MAX_SIZE) / height);
+            height = MAX_SIZE;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Sử dụng JPEG với chất lượng 80% để tối ưu dung lượng
+        resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.8));
       };
 
-      reader.onerror = () => {
-        reject(new Error('Có lỗi xảy ra khi đọc file ảnh'));
-      };
-
-      reader.readAsDataURL(file);
+      img.onerror = () => reject(new Error('Có lỗi xảy ra khi đọc file ảnh'));
+      img.src = URL.createObjectURL(file);
     });
   }
 
