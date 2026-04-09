@@ -83,19 +83,19 @@
     }
   }
 
-  function convertImageToBase64(image) {
+  function convertImageToBase64(file) {
     return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        resolve(reader.result); 
       };
-      img.onerror = reject;
-      img.src = URL.createObjectURL(image);
+
+      reader.onerror = () => {
+        reject(new Error('Có lỗi xảy ra khi đọc file ảnh'));
+      };
+
+      reader.readAsDataURL(file);
     });
   }
 
@@ -107,7 +107,7 @@
   var SVG_CLOSE_SM = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
   var SVG_ARROW_DOWN = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 9l-7 7-7-7"/></svg>';
 
-  var MAX_FILE_SIZE = 5 * 1024 * 1024;
+  var MAX_FILE_SIZE = 1 * 1024 * 1024;
 
   var EMOJIS = [
     "😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆",
