@@ -1232,6 +1232,12 @@
       var text = elChatInput ? elChatInput.value.trim() : "";
       if (!text && !pendingImage) return;
 
+      console.log("Check handleSendChat: ", {
+        text,
+        pendingImage
+      });
+      
+
       updateSessionActivity();
 
       if (text) {
