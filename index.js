@@ -953,6 +953,11 @@
       shadow.getElementById("cw-send-btn").addEventListener("click", handleSendChat);
       elChatInput.addEventListener("keydown", function (e) {
         e.stopPropagation();
+        
+        if (e.isComposing || e.keyCode === 229) {
+          return;
+        }
+
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           handleSendChat();
@@ -1249,17 +1254,19 @@
       }
 
       if (pendingImage) {
-        var imgMsg = { from: "user", text: "", media: [{ name: URL.createObjectURL(pendingImage) }] };
+        var currentImg = pendingImage;
+        pendingImage = null;
+        if (elPendingImg) elPendingImg.classList.remove("cw-show");
+
+        var imgMsg = { from: "user", text: "", media: [{ name: URL.createObjectURL(currentImg) }] };
         chatMessages.push(imgMsg);
         appendMessageEl(imgMsg);
 
-        const base64 = await convertImageToBase64(pendingImage);
+        const base64 = await convertImageToBase64(currentImg);
 
         const rawBase64 = base64?.split(',')?.[1];
 
-        if (socket) socket.emit("widget:message", { image: [{ base64: rawBase64, file_name: pendingImage.name, mimetype: pendingImage.type }] });
-        pendingImage = null;
-        if (elPendingImg) elPendingImg.classList.remove("cw-show");
+        if (socket) socket.emit("widget:message", { image: [{ base64: rawBase64, file_name: currentImg.name, mimetype: currentImg.type }] });
       }
 
       showEmojiPicker = false;
