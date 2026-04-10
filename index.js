@@ -9,14 +9,13 @@
   const SCRIPT_EL = document.currentScript;
   const SERVER_URL = "https://chat-widget.so9.vn/";
   const APP_ID = SCRIPT_EL?.getAttribute("data-app-id")?.trim() || "";
+  const searchParams = new URLSearchParams(window.location.search);
 
   const data_default = {
-    enable: true,
     button_mode: "circle",
     button_title: "",
     button_align: "right",
-    button_size: 48,
-    button_width: 40,
+    button_width: 48,
     button_height: 48,
     button_align_left_or_right: 16,
     web_button_align_bottom: 16,
@@ -41,6 +40,18 @@
     faq_trans: {},
     auto_open: false,
   }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  };
+
+  const utmSource = searchParams.get('utm_source') || getCookie("utmSource");
+  const utmMedium = searchParams.get('utm_medium') || getCookie("utmMedium");
+  const utmCampaign = searchParams.get('utm_campaign') || getCookie("utmCampaign");
+  const utmContent = searchParams.get('utm_content') || getCookie("utmContent");
 
   if (!APP_ID) { console.error("[ChatWidget] Thiếu data-app-id"); return; }
 
@@ -106,13 +117,12 @@
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         canvas.width = width;
         canvas.height = height;
-        
+
         ctx.drawImage(img, 0, 0, width, height);
-        
-        // Sử dụng JPEG với chất lượng 80% để tối ưu dung lượng
+
         resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.8));
       };
 
@@ -191,7 +201,7 @@
     "#cw-btn-wrap { position: relative; }",
     ".cw-btn-circle { border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; box-shadow:0 4px 12px rgba(0,0,0,.15); transition:transform .2s,box-shadow .2s; }",
     ".cw-btn-circle:hover { transform: scale(1.05); }",
-    ".cw-btn-rect { display:flex; align-items:center; justify-content:center; gap:4px; cursor:pointer; position:relative; padding:0 8px; box-shadow:0 4px 12px rgba(0,0,0,.15); border-radius:8px 8px 0 0; transition:transform .2s; }",
+    ".cw-btn-rect { display:flex; align-items:center; justify-content:center; gap:4px; cursor:pointer; position:relative; padding:0 8px; box-shadow:0 4px 12px rgba(0,0,0,.15); transition:transform .2s; }",
     ".cw-btn-rect:hover { transform: translateY(-2px); }",
     ".cw-btn-rect span { font-size:12px; font-weight:500; white-space:nowrap; }",
     ".cw-btn-rect-h { display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; position:relative; padding:12px; box-shadow:0 4px 12px rgba(0,0,0,.15); writing-mode:vertical-rl; text-orientation:mixed; transition:transform .2s; }",
@@ -313,7 +323,14 @@
     ".cw-error { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; gap:12px; background:#fff; text-align:center; }",
     ".cw-error .cw-error-icon { font-size:40px; }",
     ".cw-error h3 { font-size:15px; font-weight:700; color:var(--cw-color-main); }",
-    ".cw-error p { color:#6B7280; font-size:13px; line-height:1.5; }"
+    ".cw-error p { color:#6B7280; font-size:13px; line-height:1.5; }",
+    ".cw-img-preview-mask { position:fixed; top:0; left:0; width:100vw; height:100vh; display:none; align-items:center; justify-content:center; z-index:99999; cursor:pointer; pointer-events:auto; }",
+    ".cw-img-preview-mask.cw-show { display:flex; }",
+    ".cw-img-preview-bg { position:absolute; top:0; left:0; width:100%; height:100%; background:#000; opacity:0.5; }",
+    ".cw-img-preview-close { position:absolute; top:2rem; right:2rem; width:2.625rem; height:2.625rem; border-radius:50%; background:rgba(0,0,0,.1); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:20; transition:background .2s; border:none; color:#fff; }",
+    ".cw-img-preview-close:hover { background:rgba(0,0,0,.3); }",
+    ".cw-img-preview-content { position:relative; z-index:10; max-width:80%; max-height:80vh; display:flex; align-items:center; justify-content:center; }",
+    ".cw-img-preview-content img { max-width:100%; max-height:80vh; object-fit:contain; border-radius:8px; cursor:default; }",
   ].join("\n");
 
   /* ================================================================
@@ -336,7 +353,9 @@
 
     window.addEventListener("keyup", function (e) {
       if (e.key === "Escape") {
-        if (view !== "button") {
+        if (elImagePreview && elImagePreview.classList.contains("cw-show")) {
+          closeImagePreview();
+        } else if (view !== "button") {
           switchView("button");
         }
       }
@@ -367,7 +386,7 @@
     var autoStartingSession = false;
 
     function updateSessionActivity() {
-      try { localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString()); } catch(e) {}
+      try { localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString()); } catch (e) { }
     }
 
     function checkSessionValidity() {
@@ -379,7 +398,7 @@
     function clearSession() {
       try {
         localStorage.removeItem(SESSION_STORAGE_KEY);
-      } catch(e) {}
+      } catch (e) { }
     }
 
     function getOrCreateUid(phone) {
@@ -402,11 +421,12 @@
     var elFormScreen, elFaqScreen, elChatScreen;
     var elFormSubmit;
     var elMessages, elTyping, elChatInput, elPendingImg, elEmojiPicker;
-    var elImageInput;
+    var elImageInput, elImagePreview;
 
     // =====Get Avatar URL========
     function avatarUrl() {
       if (cfg.widget_avatar) return cfg.widget_avatar;
+      if (widgetData?.picture) return widgetData?.picture;
       var ch = (cfg.widget_name || "S").charAt(0);
       return "https://ui-avatars.com/api/?name=" + encodeURIComponent(ch);
     }
@@ -424,13 +444,18 @@
     function isRight() { return cfg.button_align === "right"; }
 
     function btnBottom() {
-      if (cfg.button_mode === "rectangle" && view === "button") return 0;
+      // if (cfg.button_mode === "rectangle" && view === "button") return 0;
       return isMobile() ? cfg.mobile_button_align_bottom : cfg.web_button_align_bottom;
     }
 
     function btnSide() {
-      if (cfg.button_mode === "rectangle-horizontal" && view === "button") return 0;
+      // if (cfg.button_mode === "rectangle-horizontal" && view === "button") return 0;
       return cfg.button_align_left_or_right;
+    }
+
+    // =====Get Widget Name========
+    function widgetName() {
+      return cfg.widget_name || widgetData?.name || "Tên trang";
     }
 
     // =====Get Unseen Count========
@@ -457,11 +482,7 @@
     function isFormValid() {
       return (cfg.welcome_form_fields || [])
         .filter(function (f) { return f.require; })
-        .every(function (f) { if (f.key === "phone") {
-          return (formValues[f.key] || "").trim() !== "" && /^\d{10,11}$/.test(formValues[f.key]);
-        } else {
-          return (formValues[f.key] || "").trim() !== "";
-        } });
+        .every(function (f) { return (formValues[f.key] || "").trim() !== "" });
     }
 
     // =====Apply CSS variables========
@@ -497,20 +518,31 @@
       var btn;
       switch (cfg.button_mode) {
         case "rectangle":
+          const alignBottom = (isMobile() ? cfg.mobile_button_align_bottom : cfg.web_button_align_bottom) === 0;
+          const borderRadius = alignBottom ? "0.5rem 0.5rem 0 0" : "0.5rem";
           btn = document.createElement("div");
           btn.className = "cw-btn-rect";
           btn.style.height = cfg.button_height + "px";
+          btn.style.width = cfg.button_width + "px";
           btn.style.backgroundColor = cfg.button_color;
+          btn.style.borderRadius = borderRadius;
           btn.innerHTML = getButtonIcon(cfg.button_icon, 20, cfg.text_color) +
             '<span style="color:' + esc(cfg.text_color) + '">' + esc(cfg.button_title || "Let's chat") + '</span>';
           break;
 
         case "rectangle-horizontal":
+          const alignSideLeftRight = cfg.button_align_left_or_right === 0;
+          let rounded;
+          if (cfg.button_align === "left") {
+            rounded = alignSideLeftRight ? "0 0.5rem 0.5rem 0" : "0.5rem";
+          } else {
+            rounded = alignSideLeftRight ? "0.5rem 0 0 0.5rem" : "0.5rem";
+          }
           btn = document.createElement("div");
           btn.className = "cw-btn-rect-h";
           btn.style.width = cfg.button_width + "px";
+          btn.style.height = cfg.button_height + "px";
           btn.style.backgroundColor = cfg.button_color;
-          var rounded = isRight() ? "8px 0 0 8px" : "0 8px 8px 0";
           btn.style.borderRadius = rounded;
           btn.innerHTML = getButtonIcon(cfg.button_icon, 20, cfg.text_color) +
             '<span style="color:' + esc(cfg.text_color) + '">' + esc(cfg.button_title || "Let's chat") + '</span>';
@@ -520,10 +552,10 @@
           btn = document.createElement("div");
           btn.className = "cw-btn-circle";
           if (cfg.button_animation) btn.classList.add("cw-btn-ping");
-          btn.style.width = cfg.button_size + "px";
-          btn.style.height = cfg.button_size + "px";
+          btn.style.width = cfg.button_width + "px";
+          btn.style.height = cfg.button_height + "px";
           btn.style.backgroundColor = cfg.button_color;
-          btn.innerHTML = getButtonIcon(cfg.button_icon, cfg.button_size * 0.5, cfg.text_color);
+          btn.innerHTML = getButtonIcon(cfg.button_icon, ((cfg.button_width + cfg.button_height) / 2) * 0.5, cfg.text_color);
           break;
       }
 
@@ -663,7 +695,7 @@
           }
 
           if (index === 0) {
-            html += '<button class="cw-notif-close-item-btn '+(isRight() ? "right" : "left")+'" data-index="' + index + '">' + SVG_CLOSE_SM + '</button>';
+            html += '<button class="cw-notif-close-item-btn ' + (isRight() ? "right" : "left") + '" data-index="' + index + '">' + SVG_CLOSE_SM + '</button>';
             // hasCloseBtn = true;
           }
           html += '</div>';
@@ -703,7 +735,7 @@
       var html = '<div class="cw-panel-header" style="background-color:' + esc(cfg.button_color) + '">';
       html += '<button class="cw-panel-header-close cw-close-btn">' + SVG_CLOSE + '</button>';
       html += '<div class="cw-panel-header-avatar"><img src="' + esc(avatarUrl()) + '" alt="avatar" onerror="this.style.display=\'none\'" /></div>';
-      html += '<div class="cw-panel-header-name" style="color:' + esc(cfg.text_color) + '">' + esc(cfg.widget_name || "Tên trang") + '</div>';
+      html += '<div class="cw-panel-header-name" style="color:' + esc(cfg.text_color) + '">' + esc(widgetName()) + '</div>';
       if (cfg.form_title) {
         html += '<div class="cw-panel-header-desc" style="color:' + esc(cfg.text_color) + '">' + esc(cfg.form_title) + '</div>';
       }
@@ -782,10 +814,16 @@
         el.addEventListener("input", function () {
           formValues[key] = el.value;
           updateFormSubmitState();
+          el.style.borderColor = "";
+          var errEl = el.parentNode.querySelector(".cw-form-error");
+          if (errEl) errEl.remove();
         });
         el.addEventListener("change", function () {
           formValues[key] = el.value;
           updateFormSubmitState();
+          el.style.borderColor = "";
+          var errEl = el.parentNode.querySelector(".cw-form-error");
+          if (errEl) errEl.remove();
         });
         el.addEventListener("keydown", function (e) { e.stopPropagation(); });
         el.addEventListener("keyup", function (e) { e.stopPropagation(); });
@@ -853,7 +891,7 @@
       html += '<button class="cw-chat-header-back cw-chat-back-btn" style="color: ' + esc(cfg.text_color) + '">' + SVG_BACK + '</button>';
       html += '<div class="cw-chat-header-avatar"><img src="' + esc(avatarUrl()) + '" alt="avatar" onerror="this.style.display=\'none\'" /></div>';
       html += '<div class="cw-chat-header-info">';
-      html += '<div class="cw-chat-header-name" style="color: ' + esc(cfg.text_color) + '">' + esc(cfg.widget_name || "Tên trang") + '</div>';
+      html += '<div class="cw-chat-header-name" style="color: ' + esc(cfg.text_color) + '">' + esc(widgetName()) + '</div>';
       if (cfg.widget_description) {
         html += '<div class="cw-chat-header-status" style="color: ' + esc(cfg.text_color) + '">' + esc(cfg.widget_description) + '</div>';
       }
@@ -990,22 +1028,34 @@
         ? 'style="background-color:' + esc(cfg.button_color) + '"'
         : '';
 
-      var mediaUrl = null;
-      if (msg.media && msg.media.length > 0 && msg.media[0].name) {
-        mediaUrl = msg.media[0].name;
+      var mediaUrls = [];
+      if (msg.media && msg.media.length > 0) {
+        msg.media.forEach(function (m) { if (m.name) mediaUrls.push(m.name); });
       } else if (msg.image) {
-        mediaUrl = msg.image;
+        if (Array.isArray(msg.image)) {
+          mediaUrls = msg.image;
+        } else {
+          mediaUrls.push(msg.image);
+        }
       }
 
       var bubbleHtml = '<div class="cw-msg-bubble" ' + bubbleStyle + '>';
       if (msg.text) {
         bubbleHtml += '<div class="cw-msg-text">' + esc(msg.text) + '</div>';
       }
-      if (mediaUrl) {
-        bubbleHtml += '<img src="' + esc(mediaUrl) + '" alt="image" />';
-      }
+      mediaUrls.forEach(function (url) {
+        bubbleHtml += '<img src="' + esc(url) + '" alt="image" style="cursor:pointer;" class="cw-msg-image" data-url="' + esc(url) + '" />';
+      });
       bubbleHtml += '</div>';
       el.innerHTML = bubbleHtml;
+
+      var imgEls = el.querySelectorAll(".cw-msg-image");
+      imgEls.forEach(function (imgEl) {
+        imgEl.addEventListener("click", function () {
+          var url = this.getAttribute("data-url");
+          openImagePreview(url);
+        });
+      });
 
       elMessages.appendChild(el);
       elMessages.scrollTop = elMessages.scrollHeight;
@@ -1057,12 +1107,12 @@
         if (checkSessionValidity()) {
           updateSessionActivity();
           if (!startedSession && autoStartingSession) {
-             if (cfg.is_show_faq) {
-               switchView("faq");
-             } else {
-               switchView("chat");
-             }
-             return;
+            if (cfg.is_show_faq) {
+              switchView("faq");
+            } else {
+              switchView("chat");
+            }
+            return;
           }
         } else {
           clearSession();
@@ -1084,11 +1134,59 @@
     function handleClose() {
       pendingImage = null;
       showEmojiPicker = false;
+      closeImagePreview();
       switchView("button");
     }
 
     function handleSubmitForm() {
       if (!isFormValid() || formSubmitting) return;
+
+      var fields = cfg.welcome_form_fields || [];
+      var hasError = false;
+
+      elFormScreen.querySelectorAll(".cw-form-error").forEach(function (el) { el.remove(); });
+      elFormScreen.querySelectorAll(".cw-form-input").forEach(function (el) { el.style.borderColor = ""; });
+
+      fields.forEach(function (f) {
+        var val = (formValues[f.key] || "").trim();
+        var errorMsg = "";
+
+        if (val !== "") {
+          if (f.key === "phone" || f.key === "phone_number") {
+            var phoneRegex = /^(\+84|84|0[3|5|7|8|9])[0-9]{8}$/;
+            if (!phoneRegex.test(val.replace(/\s+/g, ''))) {
+              errorMsg = "Số điện thoại không hợp lệ";
+            }
+          } else if (f.key === "email") {
+            var emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+            if (!emailRegex.test(val)) {
+              errorMsg = "Email không hợp lệ";
+            }
+          }
+          else if (f.type === "number") {
+            if (isNaN(Number(val))) {
+              errorMsg = "Giá trị phải là số hợp lệ";
+            }
+          }
+        }
+
+        if (errorMsg) {
+          hasError = true;
+          var inputEl = elFormScreen.querySelector('[data-key="' + f.key + '"]');
+          if (inputEl) {
+            inputEl.style.borderColor = "#EF4444";
+            var errEl = document.createElement("div");
+            errEl.className = "cw-form-error";
+            errEl.style.color = "#EF4444";
+            errEl.style.fontSize = "12px";
+            errEl.style.marginTop = "4px";
+            errEl.innerText = errorMsg;
+            inputEl.parentNode.appendChild(errEl);
+          }
+        }
+      });
+
+      if (hasError) return;
 
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(formValues)); } catch (e) { }
       savedForm = Object.assign({}, formValues);
@@ -1184,6 +1282,31 @@
       }, delay);
     }
 
+    function openImagePreview(src) {
+      if (!elImagePreview) return;
+      elImagePreview.innerHTML = [
+        '<div class="cw-img-preview-bg"></div>',
+        '<button class="cw-img-preview-close">',
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+        '</button>',
+        '<div class="cw-img-preview-content">',
+        '  <img src="' + esc(src) + '" alt="preview" />',
+        '</div>'
+      ].join("");
+
+      elImagePreview.classList.add("cw-show");
+
+      elImagePreview.querySelector(".cw-img-preview-bg").addEventListener("click", closeImagePreview);
+      elImagePreview.querySelector(".cw-img-preview-close").addEventListener("click", closeImagePreview);
+    }
+
+    function closeImagePreview() {
+      if (elImagePreview) {
+        elImagePreview.classList.remove("cw-show");
+        elImagePreview.innerHTML = "";
+      }
+    }
+
     function init() {
       if (initialized) return;
       initialized = true;
@@ -1221,11 +1344,16 @@
       elBtnWrap.id = "cw-btn-wrap";
       root.appendChild(elBtnWrap);
 
+      // Image Preview
+      elImagePreview = document.createElement("div");
+      elImagePreview.className = "cw-img-preview-mask";
+      root.appendChild(elImagePreview);
+
       if (savedForm && Object.keys(savedForm).length > 0) {
         if (checkSessionValidity()) {
           formValues = savedForm;
           autoStartingSession = true;
-          
+
           var phone = formValues.phone || formValues.phone_number || "";
           var uid = getOrCreateUid(phone);
           var customerData = Object.assign({}, formValues, { uid: uid });
@@ -1316,7 +1444,7 @@
     socket.on("widget:history", function (msgs) {
       chatMessages = [];
       console.log("Check msgs: ", msgs);
-      
+
       if (Array.isArray(msgs.messages)) {
         msgs.messages.forEach(function (m) {
           chatMessages.push(m);
